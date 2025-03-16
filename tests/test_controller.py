@@ -1,11 +1,17 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
+from PIL import Image
+import os
 from computer_control.core.controller import ComputerController
 
 @pytest.fixture
 def mock_models():
     som_model = Mock()
-    caption_model_processor = Mock()
+    caption_model_processor = {
+        "processor": Mock(),
+        "model": Mock()
+    }
+    caption_model_processor["model"].device = "cpu"
     return som_model, caption_model_processor
 
 @pytest.fixture
@@ -22,11 +28,33 @@ def test_controller_initialization(controller, mock_models):
     assert controller.som_model == som_model
     assert controller.caption_model_processor == caption_model_processor
     assert controller.device == "cpu"
+    assert os.path.exists(controller.image_folder)
 
 @patch("computer_control.core.controller.time.sleep", return_value=None)
-def test_controller_run(mock_sleep, controller):
-    # Mock the run loop to exit after one iteration
-    with patch.object(controller, "_should_continue", side_effect=[True, False]):
+@patch("computer_control.core.controller.input", side_effect=["test question", "exit"])
+def test_controller_run(mock_input, mock_sleep, controller):
+    # Mock screenshot and processing
+    with patch.object(controller, "_take_screenshot") as mock_take_screenshot, \
+         patch.object(controller, "process_screenshot") as mock_process, \
+         patch.object(controller, "_move_and_click") as mock_move_click, \
+         patch("os.remove") as mock_remove:
+        
+        # Setup mock returns
+        mock_take_screenshot.return_value = "test.png"
+        mock_process.return_value = (Mock(), {"0": [100, 200]}, ["Button 1"])
+        
+        # Mock LLM response
+        mock_llm_response = Mock()
+        mock_llm_response.binary_score = "Button 1"
+        controller.retrieval_grader = Mock()
+        controller.retrieval_grader.invoke = Mock(return_value=mock_llm_response)
+        
+        # Run controller
         controller.run()
-        # Add assertions based on your specific implementation
-        assert mock_sleep.called 
+        
+        # Verify main loop execution
+        assert mock_take_screenshot.call_count == 2  # One for each iteration
+        assert mock_process.call_count == 2
+        assert mock_move_click.call_count == 1  # Only for the first iteration
+        assert mock_remove.call_count == 2  # Screenshot cleanup
+        assert mock_sleep.call_count == 1  # Sleep between iterations 
