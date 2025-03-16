@@ -1,18 +1,26 @@
 # Computer Control
 
-An AI-powered computer control system that uses computer vision to understand and interact with your computer's interface.
+An AI-powered computer control system that uses computer vision and natural language processing to understand and interact with your computer's interface automatically. The system can identify UI elements, process natural language commands, and perform automated actions.
 
 ## Features
 
-- Screen element detection using YOLO
-- Icon and UI element captioning using Florence-2 model
-- Automated computer control based on visual understanding
+- **Screen Element Detection**: Advanced computer vision using SOM model for accurate UI element identification
+- **OCR Integration**: Uses PaddleOCR for robust text detection and recognition
+- **Natural Language Processing**: GPT-4-mini powered element extraction for understanding user commands
+- **Automated Control**: Intelligent cursor movement and click actions based on visual understanding
+- **Real-time Processing**: Continuous screenshot analysis and interaction
+- **Interactive CLI**: User-friendly command-line interface with rich output formatting
 
 ## Requirements
 
 - Python 3.11 or higher
 - CUDA-compatible GPU (recommended) or CPU
-- Required model weights (see Setup section)
+- PyAutoGUI for computer control
+- Required AI models:
+  - SOM model for element detection
+  - Caption model processor
+  - GPT-4-mini for command processing
+  - PaddleOCR for text recognition
 
 ## Installation
 
@@ -33,19 +41,57 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-## Model Weights Setup
+## Dependencies
 
-1. Create a `weights` directory in the project root
-2. Download required model weights:
-   - Icon detection model: Place in `weights/icon_detect/best.pt`
-   - Florence-2 caption model: Place in `weights/icon_caption_florence/`
+Key dependencies include:
+- `pyautogui`: For computer control operations
+- `Pillow`: Image processing
+- `rich`: Terminal output formatting
+- `langchain`: LLM integration
+- `langchain_openai`: OpenAI model integration
+- `paddleocr`: Text detection and recognition
 
 ## Usage
 
-Run the computer control system:
+1. Start the computer control system:
 ```bash
 python -m computer_control
 ```
+
+2. The system will:
+   - Take periodic screenshots of your screen
+   - Process and analyze UI elements
+   - Wait for your natural language commands
+   - Execute the requested actions automatically
+
+3. Example commands:
+   - "Click on the start menu"
+   - "Open the app folder"
+   - "Go to settings"
+
+## Technical Details
+
+### Component Architecture
+
+1. **Screenshot Processing**
+   - Automated screenshot capture
+   - Image preprocessing and conversion
+   - Dynamic scaling based on screen resolution
+
+2. **Element Detection**
+   - SOM model-based element identification
+   - OCR text detection with PaddleOCR
+   - Coordinate mapping for precise interaction
+
+3. **Command Processing**
+   - Natural language understanding with GPT-4-mini
+   - Element matching and validation
+   - Coordinate calculation for cursor movement
+
+4. **Action Execution**
+   - Smooth cursor movement
+   - Click action verification
+   - Error handling and recovery
 
 ## Development
 
@@ -60,18 +106,17 @@ python -m computer_control
 computer-control/
 ├── src/
 │   └── computer_control/
-│       ├── core/          # Core functionality
-│       ├── models/        # ML model implementations
+│       ├── core/          # Core control and processing logic
+│       │   └── controller.py  # Main controller implementation
+│       ├── models/        # AI model implementations
+│       │   └── element_extractor.py  # Element extraction logic
 │       ├── utils/         # Utility functions
+│       │   └── vision.py  # Computer vision utilities
 │       └── __main__.py    # Entry point
 ├── tests/                 # Test suite
 ├── pyproject.toml        # Project configuration
 └── README.md            # This file
 ```
-
-## License
-
-MIT License - See LICENSE file for details.
 
 ## Contributing
 
@@ -80,3 +125,14 @@ MIT License - See LICENSE file for details.
 3. Make your changes
 4. Run tests and linting
 5. Submit a pull request
+
+## License
+
+MIT License - See LICENSE file for details.
+
+## Acknowledgments
+
+- SOM model for element detection
+- Florence-2 caption model
+- OpenAI for GPT-4-mini
+- PaddlePaddle team for PaddleOCR
