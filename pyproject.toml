@@ -26,7 +26,6 @@ dependencies = [
     "easyocr>=1.7.2",
     "accelerate>=0.26.0",
     "paddlepaddle>=2.6.2",
-    "setuptools[dev]>=76.0.0",
 ]
 
 [project.optional-dependencies]
@@ -37,6 +36,7 @@ dev = [
     "isort>=5.12.0",
     "mypy>=1.0.0",
     "ruff>=0.0.290",
+    "setuptools>=76.0.0",
 ]
 
 [project.scripts]
