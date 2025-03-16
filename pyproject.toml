@@ -1,0 +1,66 @@
+[project]
+name = "computer-control"
+version = "0.1.0"
+description = "An AI-powered computer control system using computer vision"
+readme = "README.md"
+authors = [
+    { name = "sheiphanjoseph", email = "sheiphan@typeset.io" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "numpy>=1.24.0",
+    "Pillow>=9.0.0",
+    "transformers>=4.30.0",
+    "opencv-python>=4.8.0",
+    "huggingface-hub>=0.29.3",
+    "pyautogui>=0.9.54",
+    "rich>=13.9.4",
+    "langchain-core>=0.3.45",
+    "langchain>=0.3.20",
+    "langchain-openai>=0.3.8",
+    "openai>=1.66.3",
+    "ultralytics>=8.3.91",
+    "paddleocr>=2.10.0",
+    "easyocr>=1.7.2",
+    "accelerate>=0.26.0",
+    "paddlepaddle>=2.6.2",
+    "setuptools[dev]>=76.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "ruff>=0.0.290",
+]
+
+[project.scripts]
+computer-control = "computer_control:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+select = ["E", "F", "B", "I"]
+ignore = []
+line-length = 88
+target-version = "py311"
