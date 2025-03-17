@@ -1,10 +1,11 @@
 """Configuration management for the computer control system."""
 
 import os
-import torch
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+
+import torch
+
 
 def get_default_device() -> str:
     """Get the default device based on system capabilities."""

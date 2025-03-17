@@ -1,20 +1,25 @@
-import torch
-from ultralytics import YOLO
-from PIL import Image
-from typing import Tuple, List, Dict, Any
-import os
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
+
 import cv2
-from paddleocr import PaddleOCR
 import easyocr
-from transformers import Blip2Processor, Blip2ForConditionalGeneration
+import numpy as np
+import torch
+from paddleocr import PaddleOCR
+from PIL import Image
+from transformers import Blip2ForConditionalGeneration, Blip2Processor
+from ultralytics import YOLO
+
 
 def get_yolo_model(model_path: str) -> YOLO:
     """Load and return a YOLO model."""
     model = YOLO(model_path)
     return model
 
-def get_caption_model_processor(model_name: str, model_name_or_path: str, device: str):
+def get_caption_model_processor(
+    model_name: str, 
+    model_name_or_path: str, 
+    device: str
+) -> Dict[str, Any]:
     """Load and return a caption model processor."""
     processor = Blip2Processor.from_pretrained(model_name_or_path)
     model = Blip2ForConditionalGeneration.from_pretrained(
@@ -29,7 +34,7 @@ def check_ocr_box(
     display_img: bool = False,
     output_bb_format: str = 'xyxy',
     goal_filtering: Any = None,
-    easyocr_args: Dict = None,
+    easyocr_args: Optional[Dict[str, Any]] = None,
     use_paddleocr: bool = True
 ) -> Tuple[Tuple[List[str], List[List[float]]], bool]:
     """Check OCR box in the image."""
@@ -79,10 +84,10 @@ def get_som_labeled_img(
     som_model: YOLO,
     BOX_TRESHOLD: float = 0.03,
     output_coord_in_ratio: bool = False,
-    ocr_bbox: List = None,
-    draw_bbox_config: Dict = None,
-    caption_model_processor: Any = None,
-    ocr_text: List[str] = None,
+    ocr_bbox: Optional[List[List[float]]] = None,
+    draw_bbox_config: Optional[Dict[str, Any]] = None,
+    caption_model_processor: Optional[Dict[str, Any]] = None,
+    ocr_text: Optional[List[str]] = None,
     use_local_semantics: bool = True,
     iou_threshold: float = 0.1,
     imgsz: int = 640
@@ -105,13 +110,19 @@ def get_som_labeled_img(
     
     # Process OCR results if available
     if ocr_bbox and ocr_text:
-        for bbox, text in zip(ocr_bbox, ocr_text):
+        for bbox, _text in zip(ocr_bbox, ocr_text, strict=False):
             boxes.append(bbox)
             scores.append(1.0)  # High confidence for OCR results
     
     # Generate captions for detected regions
     captions = []
     label_coordinates = {}
+
+    if caption_model_processor is None:
+        raise ValueError("caption_model_processor cannot be None")
+
+    processor = caption_model_processor["processor"]
+    model = caption_model_processor["model"]
     
     for i, box in enumerate(boxes):
         x1, y1, x2, y2 = map(int, box)
@@ -121,17 +132,17 @@ def get_som_labeled_img(
         region_pil = Image.fromarray(region)
         
         # Get caption using BLIP-2
-        inputs = caption_model_processor["processor"](
+        inputs = processor(
             images=region_pil, 
             return_tensors="pt"
-        ).to(caption_model_processor["model"].device)
+        ).to(model.device)
         
-        out = caption_model_processor["model"].generate(
+        out = model.generate(
             **inputs,
             max_new_tokens=20,
             num_beams=5
         )
-        caption = caption_model_processor["processor"].batch_decode(
+        caption = processor.batch_decode(
             out, 
             skip_special_tokens=True
         )[0]
@@ -148,23 +159,29 @@ def get_som_labeled_img(
     
     # Draw boxes and captions on image
     image_with_boxes = image_np.copy()
-    for i, (box, caption) in enumerate(zip(boxes, captions)):
+    bbox_config = draw_bbox_config or {
+        'thickness': 2,
+        'text_scale': 0.5,
+        'text_thickness': 1
+    }
+    
+    for _i, (box, caption) in enumerate(zip(boxes, captions, strict=False)):
         x1, y1, x2, y2 = map(int, box)
         cv2.rectangle(
             image_with_boxes,
             (x1, y1),
             (x2, y2),
             (0, 255, 0),
-            thickness=draw_bbox_config.get('thickness', 2)
+            thickness=bbox_config.get('thickness', 2)
         )
         cv2.putText(
             image_with_boxes,
             caption[:30],
             (x1, y1 - 10),
             cv2.FONT_HERSHEY_SIMPLEX,
-            draw_bbox_config.get('text_scale', 0.5),
+            bbox_config.get('text_scale', 0.5),
             (0, 255, 0),
-            draw_bbox_config.get('text_thickness', 1)
+            bbox_config.get('text_thickness', 1)
         )
     
     return Image.fromarray(image_with_boxes), label_coordinates, captions 

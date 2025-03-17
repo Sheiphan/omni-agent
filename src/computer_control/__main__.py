@@ -4,11 +4,10 @@ import logging
 import sys
 from typing import NoReturn
 
-import torch
-
 from .config import Config
-from .utils.vision import get_yolo_model, get_caption_model_processor
 from .core.controller import ComputerController
+from .utils.vision import get_caption_model_processor, get_yolo_model
+
 
 def setup_logging(debug: bool = False) -> None:
     """Setup logging configuration."""
@@ -50,7 +49,8 @@ def main() -> NoReturn:
         
         logger.info("Starting computer control system...")
         controller.run()
-    except Exception as e:
+        sys.exit(0)
+    except Exception:
         logger.exception("Fatal error occurred")
         sys.exit(1)
 

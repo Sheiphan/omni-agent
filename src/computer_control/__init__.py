@@ -7,7 +7,7 @@ try:
 except metadata.PackageNotFoundError:
     __version__ = "unknown"
 
-from .core.controller import ComputerController
 from .config import Config, ModelConfig
+from .core.controller import ComputerController
 
 __all__ = ["ComputerController", "Config", "ModelConfig"] 
