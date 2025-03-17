@@ -38,9 +38,7 @@ def test_controller_initialization(
 
 @patch("computer_control.core.controller.time.sleep", return_value=None)
 @patch("computer_control.core.controller.input", side_effect=["test question", "exit"])
-def test_controller_run(
-    mock_input: Mock, mock_sleep: Mock, controller: ComputerController
-) -> None:
+def test_controller_run(mock_input: Mock, mock_sleep: Mock, controller: ComputerController) -> None:
     # Mock screenshot and processing
     with (
         patch.object(controller, "_take_screenshot") as mock_take_screenshot,
