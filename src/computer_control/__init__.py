@@ -10,4 +10,4 @@ except metadata.PackageNotFoundError:
 from .config import Config, ModelConfig
 from .core.controller import ComputerController
 
-__all__ = ["ComputerController", "Config", "ModelConfig"] 
+__all__ = ["ComputerController", "Config", "ModelConfig"]

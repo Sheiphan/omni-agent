@@ -15,16 +15,20 @@ def get_default_device() -> str:
         return "cuda"  # Use CUDA if available
     return "cpu"  # Fallback to CPU
 
+
 @dataclass
 class ModelConfig:
     """Configuration for ML models."""
+
     icon_detect_path: Path
     icon_caption_model: str
     device: str = get_default_device()
 
+
 @dataclass
 class Config:
     """Main configuration class."""
+
     model: ModelConfig
     debug: bool = False
     screenshot_interval: float = 1.0  # seconds
@@ -54,4 +58,4 @@ class Config:
                 icon_detect_path=Path("weights/icon_detect/best.pt"),
                 icon_caption_model="Salesforce/blip2-opt-2.7b",
             )
-        ) 
+        )
