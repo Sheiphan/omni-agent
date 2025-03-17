@@ -8,16 +8,11 @@ import pyautogui
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from PIL import Image
-from pydantic import BaseModel
-from rich import print
+from rich.console import Console
 from ultralytics import YOLO
 
 from ..models.element_extractor import ElementExtractor
 from ..utils.vision import check_ocr_box, get_som_labeled_img
-
-
-class LLMResponse(BaseModel):
-    binary_score: str
 
 
 class ComputerController:
@@ -33,6 +28,7 @@ class ComputerController:
         self.caption_model_processor = caption_model_processor
         self.device = device
         self.image_folder = image_folder
+        self.console = Console()
         self._setup_llm()
         self._ensure_image_folder()
 
@@ -117,75 +113,79 @@ class ComputerController:
     def run(self) -> None:
         """Run the computer controller."""
         try:
-            print("\n=== Starting Computer Controller ===")
+            self.console.print("\n[bold blue]=== Starting Computer Controller ===[/bold blue]")
             while True:
-                print("\n=== New Iteration Started ===")
+                self.console.print("\n[bold cyan]=== New Iteration Started ===[/bold cyan]")
 
                 # Take screenshot
-                print("📸 Taking screenshot...")
+                self.console.print("\n[bold green]📸 Taking screenshot...[/bold green]")
                 image_path = self._take_screenshot()
-                print(f"   Screenshot saved to: {image_path}")
+                self.console.print(f"   Screenshot saved to: [italic]{image_path}[/italic]")
 
                 # Process screenshot
-                print("\n🔍 Processing screenshot...")
+                self.console.print("\n[bold yellow]🔍 Processing screenshot...[/bold yellow]")
                 result = self.process_screenshot(image_path)
                 labeled_img, label_coordinates, parsed_content_list = result
 
-                print("   Found elements:")
+                self.console.print("[bold]   Found elements:[/bold]")
                 for idx, content in enumerate(parsed_content_list):
-                    print(f"   {idx}: {content}")
-                print("\n📍 Element coordinates:")
+                    self.console.print(f"   {idx}: [cyan]{content}[/cyan]")
+
+                self.console.print("\n[bold]📍 Element coordinates:[/bold]")
                 for key_idx, coords in label_coordinates.items():
                     coord_str = f"(x={coords[0]:.2f}, y={coords[1]:.2f})"
-                    print(f"   Element {key_idx}: {coord_str}")
+                    self.console.print(f"   Element {key_idx}: [yellow]{coord_str}[/yellow]")
 
                 # Clean up old screenshot
-                print("\n🗑️  Cleaning up screenshot...")
+                self.console.print("\n[bold magenta]🗑️  Cleaning up screenshot...[/bold magenta]")
                 os.remove(image_path)
 
                 # Clean the content list
-                print("\n🧹 Cleaning content list...")
+                self.console.print("\n[bold]🧹 Cleaning content list...[/bold]")
                 cleaned_content_list = [
-                    item.split(": ", 1)[1] if ": " in item else item
-                    for item in parsed_content_list
+                    item.split(": ", 1)[1] if ": " in item else item for item in parsed_content_list
                 ]
-                print("   Cleaned elements:")
+                self.console.print("[bold]   Cleaned elements:[/bold]")
                 for idx, content in enumerate(cleaned_content_list):
-                    print(f"   {idx}: {content}")
+                    self.console.print(f"   {idx}: [cyan]{content}[/cyan]")
 
                 # Ask for user input
-                print("\n❓ Waiting for user input...")
+                self.console.print("\n[bold green]❓ Waiting for user input...[/bold green]")
                 question = input("Ask a question (or type 'exit' to stop): ")
                 if question.lower() == "exit":
-                    print("\n👋 Exiting program...")
+                    self.console.print("\n[bold red]👋 Exiting program...[/bold red]")
                     break
 
-                print("\n🤖 Processing question through LLM...")
-                print(f"   Question: {question}")
-                print("   Available elements:", cleaned_content_list)
+                self.console.print(
+                    "\n[bold purple]🤖 Processing question through LLM...[/bold purple]"
+                )
+                self.console.print(f"   Question: [italic]{question}[/italic]")
+                self.console.print("   Available elements:", cleaned_content_list)
                 response = self.retrieval_grader.invoke(
                     {"question": question, "page_elements": cleaned_content_list}
                 )
                 if not isinstance(response, ElementExtractor):
                     raise TypeError("Unexpected response type from LLM")
                 target_content = response.binary_score
-                print(f"   LLM identified target: '{target_content}'")
-
-                # Move and click
-                print("\n🖱️  Attempting to move and click...")
-                self._move_and_click(
-                    parsed_content_list, label_coordinates, target_content
+                self.console.print(
+                    f"   LLM identified target: [bold green]'{target_content}'[/bold green]"
                 )
 
+                # Move and click
+                self.console.print(
+                    "\n[bold yellow]🖱️  Attempting to move and click...[/bold yellow]"
+                )
+                self._move_and_click(parsed_content_list, label_coordinates, target_content)
+
                 # Sleep for the configured interval
-                print("\n⏳ Waiting for next iteration...")
+                self.console.print("\n[bold blue]⏳ Waiting for next iteration...[/bold blue]")
                 time.sleep(1.0)  # TODO: Use config.screenshot_interval
 
         except KeyboardInterrupt:
             msg = "Process interrupted by user. Stopping computer control system..."
-            print(f"\n⛔ {msg}")
+            self.console.print(f"\n[bold red]⛔ {msg}[/bold red]")
         except Exception as e:
-            print(f"\n❌ Error occurred: {str(e)}")
+            self.console.print(f"\n[bold red]❌ Error occurred: {str(e)}[/bold red]")
             raise
 
     def _move_and_click(
@@ -195,35 +195,43 @@ class ComputerController:
         target_content: str,
     ) -> None:
         """Move to and click on the target content."""
-        print(f"   🔎 Searching for content: '{target_content}'")
+        self.console.print(
+            f"   [bold]🔎 Searching for content: [cyan]'{target_content}'[/cyan][/bold]"
+        )
 
         # Find the content index
         found_idx: Optional[int] = None
         for idx, content in enumerate(parsed_content_list):
-            print(f"   Checking element {idx}: '{content}'")
+            self.console.print(f"   Checking element {idx}: [italic]'{content}'[/italic]")
             if target_content in content:
                 found_idx = idx
-                print(f"   ✅ Found match at index {idx}")
+                self.console.print(f"   [bold green]✅ Found match at index {idx}[/bold green]")
                 break
 
         if found_idx is None:
-            print(f"   ❌ Content '{target_content}' not found in any elements")
+            self.console.print(
+                f"   [bold red]❌ Content '{target_content}' not found in any elements[/bold red]"
+            )
             return
 
         # Get the coordinates using string key
         coord_key = str(found_idx)
-        print(f"   📍 Getting coordinates for index {coord_key}")
+        self.console.print(f"   [bold]📍 Getting coordinates for index {coord_key}[/bold]")
         coordinates = label_coordinates.get(coord_key)
         if coordinates is None:
-            print(f"   ❌ No coordinates found for index {coord_key}")
+            self.console.print(
+                f"   [bold red]❌ No coordinates found for index {coord_key}[/bold red]"
+            )
             return
 
         # Extract x, y from coordinates and move the cursor
         x, y = coordinates[0], coordinates[1]
-        print(f"   🖱️  Moving cursor to coordinates: ({x:.2f}, {y:.2f})")
+        self.console.print(
+            f"   [bold yellow]🖱️  Moving cursor to coordinates: ({x:.2f}, {y:.2f})[/bold yellow]"
+        )
         pyautogui.moveTo(x, y, duration=0.5)  # Smoothly move the cursor
-        print("   🖱️  Clicking...")
+        self.console.print("   [bold yellow]🖱️  Clicking...[/bold yellow]")
         pyautogui.click()  # Perform a click action
         coord_str = f"({x:.2f}, {y:.2f})"
         msg = f"Successfully clicked on '{target_content}' at coordinates: {coord_str}"
-        print(f"   ✅ {msg}")
+        self.console.print(f"   [bold green]✅ {msg}[/bold green]")

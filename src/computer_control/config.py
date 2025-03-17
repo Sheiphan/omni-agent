@@ -38,12 +38,8 @@ class Config:
         """Create configuration from environment variables."""
         return cls(
             model=ModelConfig(
-                icon_detect_path=Path(
-                    os.getenv("ICON_DETECT_PATH", "weights/icon_detect/best.pt")
-                ),
-                icon_caption_model=os.getenv(
-                    "ICON_CAPTION_MODEL", "Salesforce/blip2-opt-2.7b"
-                ),
+                icon_detect_path=Path(os.getenv("ICON_DETECT_PATH", "weights/icon_detect/best.pt")),
+                icon_caption_model=os.getenv("ICON_CAPTION_MODEL", "Salesforce/blip2-opt-2.7b"),
                 device=os.getenv("DEVICE", get_default_device()),
             ),
             debug=os.getenv("DEBUG", "").lower() == "true",
