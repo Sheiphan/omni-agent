@@ -1,1 +1,1 @@
-"""Test suite for computer control.""" 
+"""Test suite for computer control."""

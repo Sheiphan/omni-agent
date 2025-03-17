@@ -2,4 +2,4 @@
 
 from .controller import ComputerController
 
-__all__ = ["ComputerController"] 
+__all__ = ["ComputerController"]
